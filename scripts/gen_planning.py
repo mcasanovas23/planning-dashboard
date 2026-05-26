@@ -337,12 +337,11 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .badge-txt   {{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb}}
 .badge-prio  {{background:#f97316;color:#fff}}
 
-/* Sota comanda: rojo + white check */
+/* Sota comanda: badge rojo */
 .sota-check{{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:15px;height:15px;border-radius:3px;
+  display:inline-block;padding:2px 8px;border-radius:10px;
   background:#d32f2f;color:#fff;font-size:10px;font-weight:700;
-  line-height:1}}
+  white-space:nowrap}}
 /* Prep línea: verde Asignado */
 .prep-check{{
   display:inline-flex;align-items:center;justify-content:center;
@@ -595,7 +594,7 @@ function renderTable(fam) {{
       if (k === 'fase')       return `<td>${{faseCell(r.familia || fam, val)}}</td>`;
       if (k === 'fecha_fab') return `<td style="text-align:center;font-size:11px;color:#374151;white-space:nowrap">${{val ?? ''}}</td>`;
       if (k === 'article')   return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
-      if (k === 'sota_cmd')   return `<td style="text-align:center">${{val === 'X' ? '<span class="sota-check">✓</span>' : ''}}</td>`;
+      if (k === 'sota_cmd')   return `<td style="text-align:center">${{val === 'X' ? '<span class="sota-check">comanda</span>' : ''}}</td>`;
       if (k === 'prep_linia') return `<td style="text-align:center">${{val === 'X' ? '<span class="prep-check">✓</span>' : ''}}</td>`;
       if (k === 'pzas_lot' || k === 'pzas_cmd') return `<td style="text-align:right;font-weight:600">${{val}}</td>`;
       if (k === 'setmana')                  return `<td style="text-align:center;font-weight:700;color:#0f2044">${{val}}</td>`;
