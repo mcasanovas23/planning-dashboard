@@ -173,25 +173,27 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 
 .table-wrap{{overflow-x:auto;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.1)}}
 
-/* ── Dashboard table ── */
-.dash-table{{width:100%;border-collapse:collapse;background:#fff;font-size:12px}}
+/* ── Dashboard table — responsive ── */
+.dash-table{{width:100%;table-layout:fixed;border-collapse:collapse;background:#fff;font-size:12px}}
 .dash-table thead tr.wk-header th{{
-  background:#0f2044;color:#fff;padding:8px 10px;text-align:center;
-  font-size:11px;font-weight:700;letter-spacing:.4px;white-space:nowrap;
+  background:#0f2044;color:#fff;padding:9px 8px;text-align:center;
+  font-size:11px;font-weight:700;letter-spacing:.4px;overflow:hidden;text-overflow:ellipsis;
   border-right:1px solid rgba(255,255,255,.1)}}
-.dash-table thead tr.wk-header th:first-child{{text-align:left;border-right:2px solid rgba(255,255,255,.2);min-width:110px}}
+.dash-table thead tr.wk-header th:first-child{{text-align:left;border-right:2px solid rgba(255,255,255,.2)}}
 .dash-table thead tr.wk-header th:last-child{{border-right:none}}
 .dash-table tbody tr{{border-bottom:1px solid #f1f5f9;transition:background .1s}}
 .dash-table tbody tr:hover{{background:#f0f7ff}}
-.dash-table td{{padding:5px 8px;vertical-align:middle;border-right:1px solid #f1f5f9;font-size:11px}}
-.dash-table td:first-child{{font-weight:700;color:#0f2044;font-size:12px;border-right:2px solid #e2e8f0;white-space:nowrap}}
-.dash-table td:last-child{{border-right:none;text-align:center;white-space:nowrap}}
+.dash-table td{{padding:8px 8px;vertical-align:middle;border-right:1px solid #f1f5f9;font-size:11px;overflow:hidden}}
+.dash-table td:first-child{{font-weight:700;color:#0f2044;font-size:12px;border-right:2px solid #e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.dash-table td:last-child{{border-right:none;text-align:center;white-space:nowrap;width:90px}}
 .dash-table tbody tr:last-child td{{border-bottom:none}}
 
-.week-cell{{display:flex;align-items:center;gap:5px;white-space:nowrap}}
-.wc-nums{{font-weight:700;font-size:11px;color:#1e293b;white-space:nowrap}}
-.wc-sep{{color:#cbd5e1;font-size:10px}}
-.dif-chip{{display:inline-block;padding:0px 6px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap}}
+/* Week cell: planning (bold) / sem (grey small)  chip — todo en línea */
+.week-cell{{display:flex;align-items:center;gap:5px;white-space:nowrap;justify-content:center}}
+.wc-planning{{font-weight:700;font-size:12px;color:#1e293b}}
+.wc-sep{{color:#cbd5e1;font-size:11px;margin:0 1px}}
+.wc-sem{{font-size:10px;color:#94a3b8;font-weight:400}}
+.dif-chip{{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap}}
 .dif-chip.pos{{background:#dcfce7;color:#15803d}}
 .dif-chip.neg{{background:#fee2e2;color:#b91c1c}}
 .dif-chip.zero{{background:#f1f5f9;color:#94a3b8}}
@@ -345,11 +347,17 @@ function difChip(val) {{
 function buildDashboard() {{
   const tbl = document.getElementById('dash-table');
 
+  // Colgroup: familia col fija, semanas equidistribución, botón fijo
+  const nWeeks = WEEKS.length;
+  let cg = `<colgroup><col style="width:110px">`;
+  for (let i = 0; i < nWeeks; i++) cg += `<col>`;
+  cg += `<col style="width:90px"></colgroup>`;
+
   // Header row
   let thCols = `<th>Familia</th>`;
-  WEEKS.forEach(w => {{ thCols += `<th>Semana ${{w}}</th>`; }});
+  WEEKS.forEach(w => {{ thCols += `<th>Sem. ${{w}}</th>`; }});
   thCols += `<th></th>`;
-  tbl.innerHTML = `<thead><tr class="wk-header">${{thCols}}</tr></thead><tbody id="dash-tbody"></tbody>`;
+  tbl.innerHTML = cg + `<thead><tr class="wk-header">${{thCols}}</tr></thead><tbody id="dash-tbody"></tbody>`;
 
   const tbody = document.getElementById('dash-tbody');
   RESUM_DATA.forEach(fam => {{
@@ -362,7 +370,9 @@ function buildDashboard() {{
       if (w.sem === null && w.planning === null)
         return `<td><span class="no-data-cell">—</span></td>`;
       return `<td><div class="week-cell">
-        <span class="wc-nums">${{w.planning ?? '—'}}<span class="wc-sep"> / </span>${{w.sem ?? '—'}}</span>
+        <span class="wc-planning">${{w.planning ?? '—'}}</span>
+        <span class="wc-sep">/</span>
+        <span class="wc-sem">${{w.sem ?? '—'}}</span>
         ${{difChip(w.dif)}}
       </div></td>`;
     }}).join('');
