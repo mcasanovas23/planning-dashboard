@@ -348,7 +348,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .fase-wrap{{display:flex;flex-direction:column;gap:2px}}
 .fase-text{{font-size:11px;color:#374151;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .fase-bar-bg{{height:3px;background:#e5e7eb;border-radius:2px;width:100px}}
-.fase-bar{{height:3px;background:#22c55e;border-radius:2px}}
+.fase-bar{{height:3px;background:#3b82f6;border-radius:2px}}
 
 /* ── Column filters ── */
 .filter-row th{{background:#162d5a;padding:3px 4px;position:sticky;top:34px;z-index:9}}
@@ -556,9 +556,10 @@ function faseCell(fam, fase) {{
   const idx     = phases.findIndex(p => fase.startsWith(p.name.substring(0, 12)));
   let pct = 0;
   if (idx >= 0) pct = idx >= capIdx ? 100 : Math.round(((idx + 1) / (capIdx + 1)) * 100);
+  const barColor = pct === 100 ? '#22c55e' : '#3b82f6';
   const barHtml = idx >= 0
     ? `<div style="display:flex;align-items:center;gap:5px">
-        <div class="fase-bar-bg"><div class="fase-bar" style="width:${{pct}}%"></div></div>
+        <div class="fase-bar-bg"><div class="fase-bar" style="width:${{pct}}%;background:${{barColor}}"></div></div>
         <span style="font-size:10px;color:#1e293b;font-weight:600">${{pct}}%</span>
       </div>`
     : '';
@@ -595,7 +596,7 @@ function renderTable(fam) {{
       const val = r[k];
       if (k === 'disp1' || k === 'disp2')  return `<td>${{dispBadge(val)}}</td>`;
       if (k === 'txt')                      return `<td>${{txtBadge(val)}}</td>`;
-      if (k === 'fase')       return `<td>${{faseCell(r.familia || fam, val)}}</td>`;
+      if (k === 'fase')       return `<td style="text-align:left">${{faseCell(r.familia || fam, val)}}</td>`;
       if (k === 'fecha_fab') {{
         if (val === '__ESTERIL__') return `<td><span class="esteril-badge">Esterilizando</span></td>`;
         return `<td style="font-size:11px;color:#374151;white-space:nowrap">${{val ?? ''}}</td>`;
@@ -655,7 +656,7 @@ function buildFamiliaTab(fam) {{
 function onSearch(fam, val) {{ searchState[fam] = val; renderTable(fam); }}
 
 // ── Excel-style column filters ────────────────────────────────────────────
-function _sid(fam, key) {{ return (fam + '_' + key).replace(/[ .\/]/g,'_'); }}
+function _sid(fam, key) {{ return (fam + '_' + key).replace(/[ .]/g,'_'); }}
 
 let _fdFam = null, _fdKey = null, _fdClose = null;
 
