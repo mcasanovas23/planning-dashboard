@@ -275,7 +275,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .dash-table tbody tr:hover{{background:#f0f7ff}}
 .dash-table td{{padding:8px 8px;vertical-align:middle;border-right:1px solid #f1f5f9;font-size:11px;overflow:hidden}}
 .dash-table td:first-child{{font-weight:700;color:#0f2044;font-size:12px;border-right:2px solid #e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
-.dash-table td:last-child{{border-right:none;text-align:center;white-space:nowrap;width:90px}}
+.dash-table td:last-child{{border-right:none}}
 .dash-table tbody tr:last-child td{{border-bottom:none}}
 
 /* Week cell: planning (bold) / sem (grey small)  chip — todo en línea */
@@ -315,7 +315,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 /* ── Planning table ── */
 .plan-table{{width:100%;border-collapse:collapse;background:#fff;font-size:12px}}
 .plan-table thead tr:first-child th{{background:#0f2044;color:#fff;padding:8px 10px;text-align:left;
-  white-space:nowrap;position:sticky;top:0;z-index:11;font-size:11px;font-weight:700;
+  white-space:nowrap;position:sticky;top:var(--plan-hdr-top,0px);z-index:11;font-size:11px;font-weight:700;
   letter-spacing:.3px}}
 .plan-table tbody tr{{border-bottom:1px solid #f1f5f9;transition:background .1s}}
 .plan-table tbody tr:hover{{background:#f0f7ff}}
@@ -352,7 +352,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .fase-bar{{height:3px;background:#3b82f6;border-radius:2px}}
 
 /* ── Column filters ── */
-.filter-row th{{background:#162d5a;padding:4px 6px;position:sticky;top:34px;z-index:9}}
+.filter-row th{{background:#162d5a;padding:4px 6px;position:sticky;top:var(--plan-filter-top,34px);z-index:9}}
 .col-filter{{
   width:100%;padding:3px 6px;border:1px solid rgba(255,255,255,.18);
   border-radius:4px;background:rgba(255,255,255,.08);color:#e2e8f0;
@@ -427,6 +427,21 @@ function buildNav() {{
 }}
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
+function famWeekProgress(fam, weekNum) {{
+  const rows = (ALL_ROWS[fam] || []).filter(r => r.setmana == weekNum);
+  if (!rows.length) return null;
+  const phases = FASES_MAP[fam] || [];
+  const total  = phases.length;
+  if (!total) return null;
+  let sum = 0, count = 0;
+  rows.forEach(r => {{
+    if (!r.fase) return;
+    const idx = phases.findIndex(p => r.fase.startsWith(p.name.substring(0, 12)));
+    if (idx >= 0) {{ sum += Math.round(((idx + 1) / total) * 100); count++; }}
+  }});
+  return count ? Math.round(sum / count) : null;
+}}
+
 function difChip(val) {{
   if (val === null || val === undefined) return '<span class="no-data-cell">—</span>';
   const n = Number(val);
@@ -437,39 +452,46 @@ function difChip(val) {{
 
 function buildDashboard() {{
   const tbl = document.getElementById('dash-table');
-
-  // Colgroup: familia col fija, semanas equidistribución, botón fijo
   const nWeeks = WEEKS.length;
+
+  // Colgroup: familia fija, luego pares (semana auto + progreso 85px)
   let cg = `<colgroup><col style="width:110px">`;
-  for (let i = 0; i < nWeeks; i++) cg += `<col>`;
-  cg += `<col style="width:90px"></colgroup>`;
+  for (let i = 0; i < nWeeks; i++) cg += `<col><col style="width:85px">`;
+  cg += `</colgroup>`;
 
   // Header row
   let thCols = `<th>Familia</th>`;
-  WEEKS.forEach(w => {{ thCols += `<th>Sem. ${{w}}</th>`; }});
-  thCols += `<th></th>`;
+  WEEKS.forEach(w => {{
+    thCols += `<th>Sem. ${{w}}</th>`;
+    thCols += `<th style="font-size:10px;letter-spacing:0;font-weight:500;color:#b0c4de">Progreso</th>`;
+  }});
   tbl.innerHTML = cg + `<thead><tr class="wk-header">${{thCols}}</tr></thead><tbody id="dash-tbody"></tbody>`;
 
   const tbody = document.getElementById('dash-tbody');
   RESUM_DATA.forEach(fam => {{
-    const hasTab = FAM_ORDERED.includes(fam.familia);
-    const detailBtn = hasTab
-      ? `<button class="detail-btn" onclick="showTab('${{fam.familia}}')">Ver detalle →</button>`
-      : '';
-
-    let cells = fam.weeks.map(w => {{
+    let cells = fam.weeks.map((w, wi) => {{
+      const weekNum  = WEEKS[wi];
+      const pct      = famWeekProgress(fam.familia, weekNum);
+      const progCell = pct !== null
+        ? `<td><div style="display:flex;align-items:center;gap:4px;padding:0 6px">
+            <div style="flex:1;height:5px;background:#e5e7eb;border-radius:3px;min-width:30px;overflow:hidden">
+              <div style="height:5px;background:#22c55e;border-radius:3px;width:${{pct}}%"></div>
+            </div>
+            <span style="font-size:10px;font-weight:700;color:#1e293b;white-space:nowrap">${{pct}}%</span>
+          </div></td>`
+        : `<td></td>`;
       if (w.sem === null && w.planning === null)
-        return `<td><span class="no-data-cell">—</span></td>`;
+        return `<td><span class="no-data-cell">—</span></td>${{progCell}}`;
       return `<td><div class="week-cell">
         <span class="wc-planning">${{w.planning ?? '—'}}</span>
         <span class="wc-sep">/</span>
         <span class="wc-sem">${{w.sem ?? '—'}}</span>
         ${{difChip(w.dif)}}
-      </div></td>`;
+      </div></td>${{progCell}}`;
     }}).join('');
 
     tbody.insertAdjacentHTML('beforeend',
-      `<tr><td>${{fam.familia}}</td>${{cells}}<td>${{detailBtn}}</td></tr>`);
+      `<tr><td>${{fam.familia}}</td>${{cells}}</tr>`);
   }});
 
   // Totals row
@@ -487,10 +509,10 @@ function buildDashboard() {{
       <span class="wc-planning">${{t.planning}}</span>
       <span class="wc-sep">/</span>
       <span class="wc-sem">${{t.sem}}</span>
-    </div></td>`
+    </div></td><td></td>`
   ).join('');
   tbody.insertAdjacentHTML('beforeend',
-    `<tr class="totals-row"><td>Total</td>${{totalCells}}<td></td></tr>`);
+    `<tr class="totals-row"><td>Total</td>${{totalCells}}</tr>`);
 
   document.getElementById('dash-meta').textContent =
     `Semanas ${{WEEKS[0]}} – ${{WEEKS[WEEKS.length-1]}} · ${{RESUM_DATA.length}} familias`;
@@ -646,8 +668,21 @@ function onColFilter(fam, key, val) {{
 }}
 
 // ── Init ──────────────────────────────────────────────────────────────────
+function updateStickyOffset() {{
+  const topBar = document.querySelector('.top-bar');
+  const tabNav = document.querySelector('.tab-nav');
+  const off = Math.round(
+    (topBar ? topBar.getBoundingClientRect().height : 0) +
+    (tabNav ? tabNav.getBoundingClientRect().height : 0)
+  );
+  document.documentElement.style.setProperty('--plan-hdr-top', off + 'px');
+  document.documentElement.style.setProperty('--plan-filter-top', (off + 34) + 'px');
+}}
+window.addEventListener('resize', updateStickyOffset);
+
 buildNav();
 buildDashboard();
+updateStickyOffset();
 </script>
 </body>
 </html>"""
