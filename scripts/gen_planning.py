@@ -86,10 +86,10 @@ all_rows = list(ws.iter_rows(values_only=True))
 COL_INDICES = [0,1,2,3,5,7,10,12,14,18,19,20,21,22,27]
 COL_KEYS    = ['article','medidas','familia','lot','setmana',
                'mat1','disp1','mat2','disp2','prep_linia',
-               'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_obj','fecha_fab','txt']
+               'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_fab','txt']
 COL_HEADERS = ['Artículo','Medidas','Familia','Lote','Semana',
                'Balón','Disp. Mat1','Material 2','Disp. Mat2','Prep. Línea',
-               'peces_lot','peces_comanda','Sota Cmd','Fase Actual','Fecha Obj.','Fecha Fab.','Txt']
+               'peces_lot','peces_comanda','Sota Cmd','Fase Actual','Fecha Fab.','Txt']
 
 rows_data = []
 for row in all_rows[1:]:
@@ -615,7 +615,6 @@ function renderTable(fam) {{
       if (k === 'disp1' || k === 'disp2')  return `<td>${{dispBadge(val)}}</td>`;
       if (k === 'txt')                      return `<td>${{txtBadge(val)}}</td>`;
       if (k === 'fase')       return `<td style="text-align:left">${{faseCell(r.familia || fam, val)}}</td>`;
-      if (k === 'fecha_obj') return `<td style="font-size:11px;color:#64748b;white-space:nowrap">${{val ?? ''}}</td>`;
       if (k === 'fecha_fab') {{
         if (val === '__ESTERIL__') return `<td><span class="esteril-badge">Esterilizando</span></td>`;
         if (val) {{
