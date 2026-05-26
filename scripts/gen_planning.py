@@ -1,5 +1,52 @@
-import openpyxl, json, sys, os
-from datetime import datetime
+import openpyxl, json, sys, os, math
+from datetime import datetime, date, timedelta
+
+# ─── Calendario laboral iVascular 2026 ────────────────────────────────────
+FACTORY_HOLIDAYS = {
+    # Sem 14 – Setmana Santa (cierre completo)
+    date(2026,3,27), date(2026,3,30), date(2026,3,31), date(2026,4,1), date(2026,4,2),
+    # Sem 15 – Divendres Sant
+    date(2026,4,3),
+    # Sem 19 – 1 Mayo
+    date(2026,5,1),
+    # Sem 26 – Sant Joan bridge (solo trabaja 19/06 y 25/06)
+    date(2026,6,22), date(2026,6,23), date(2026,6,24),
+    # Sem 32-34 – Vacaciones verano
+    date(2026,7,31),
+    date(2026,8,3),  date(2026,8,4),  date(2026,8,5),  date(2026,8,6),
+    date(2026,8,7),  date(2026,8,10), date(2026,8,11), date(2026,8,12), date(2026,8,13),
+    date(2026,8,14), date(2026,8,17), date(2026,8,18), date(2026,8,19), date(2026,8,20),
+    # Sem 35 – aún vacaciones el viernes 21/08
+    date(2026,8,21),
+    # Sem 38 – Diada Catalunya
+    date(2026,9,11),
+    # Sem 42 – Hispanidad
+    date(2026,10,12),
+    # Sem 50 – puente Constitución/Inmaculada
+    date(2026,12,7), date(2026,12,8),
+    # Sem 52 – Nochebuena
+    date(2026,12,24),
+}
+
+def is_working_day(d):
+    return d.weekday() < 5 and d not in FACTORY_HOLIDAYS
+
+def add_working_days(start, n):
+    """Añade n días laborables a start (n=0 devuelve start si es laboral, sino siguiente)."""
+    current = start
+    # Si n=0, aseguramos que start sea día laborable
+    if n == 0:
+        while not is_working_day(current):
+            current += timedelta(days=1)
+        return current
+    count = 0
+    while count < n:
+        current += timedelta(days=1)
+        if is_working_day(current):
+            count += 1
+    return current
+
+TODAY = date.today()
 
 EXCEL_PATH = r'C:\Users\mcasanovas\OneDrive - IVASCULAR, S.L.U\Planning General.xlsm'
 TMP_PATH   = r'C:\Users\mcasanovas\AppData\Local\Temp\Planning_General_tmp.xlsm'
@@ -29,10 +76,10 @@ all_rows = list(ws.iter_rows(values_only=True))
 COL_INDICES = [0,1,2,3,5,7,10,12,14,18,19,20,21,22,27]
 COL_KEYS    = ['article','medidas','familia','lot','setmana',
                'mat1','disp1','mat2','disp2','prep_linia',
-               'pzas_lot','pzas_cmd','sota_cmd','fase','txt']
+               'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_fab','txt']
 COL_HEADERS = ['Artículo','Medidas','Familia','Lote','Sem.',
                'Material 1','Disp. Mat1','Material 2','Disp. Mat2','Prep. Línea',
-               'Pzas/Lote','Pzas/Cmd','Sota Cmd','Fase Actual','Txt']
+               'Pzas/Lote','Pzas/Cmd','Sota Cmd','Fase Actual','Fecha Fab.','Txt']
 
 rows_data = []
 for row in all_rows[1:]:
@@ -125,6 +172,49 @@ for src in MERGE_INTO_ICOVER:
     if src in fases_by_family and 'ICOVER' not in fases_by_family:
         fases_by_family['ICOVER'] = fases_by_family[src]
 
+# ─── Lead time ─────────────────────────────────────────────────────────────
+ws_lt = wb['lead time']
+leadtime_data = {}
+for _lt_row in ws_lt.iter_rows(min_row=2, values_only=True):
+    if _lt_row[0] and _lt_row[1]:
+        leadtime_data[str(_lt_row[0])] = int(_lt_row[1])
+
+def compute_fecha_fab(familia, tab, fase_actual, fases_map, lt_data):
+    if not fase_actual:
+        return ''
+    phases = fases_map.get(familia) or fases_map.get(tab) or []
+    if not phases:
+        return ''
+    phases_sorted = sorted(phases, key=lambda p: p['order'])
+    etiq_order = next(
+        (p['order'] for p in phases_sorted if 'etiquetado envase primario' in p['name'].lower()),
+        None
+    )
+    if not etiq_order:
+        return ''
+    lt = lt_data.get(familia) or lt_data.get(tab)
+    if not lt:
+        return ''
+    phases_per_day = etiq_order / lt
+    fase_lower = str(fase_actual).lower().strip()
+    current_order = next(
+        (p['order'] for p in phases_sorted
+         if fase_lower[:15] in p['name'].lower() or p['name'].lower()[:15] in fase_lower),
+        None
+    )
+    if current_order is None:
+        return ''
+    if current_order >= etiq_order:
+        return TODAY.strftime('%d/%m/%Y')
+    remaining_phases = etiq_order - current_order
+    remaining_days = math.ceil(remaining_phases / phases_per_day)
+    fecha = add_working_days(TODAY, remaining_days - 1)
+    return fecha.strftime('%d/%m/%Y')
+
+# Second pass: add fecha_fab to each row
+for rd in rows_data:
+    rd['fecha_fab'] = compute_fecha_fab(rd['familia'], rd['_tab'], rd.get('fase', ''), fases_by_family, leadtime_data)
+
 # ─── JSON blobs ─────────────────────────────────────────────────────────────
 j_resum    = json.dumps(resum_data,      ensure_ascii=False)
 j_weeks    = json.dumps([w['num'] for w in WEEKS], ensure_ascii=False)
@@ -195,13 +285,14 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .wc-sem{{font-size:10px;color:#94a3b8;font-weight:400}}
 .dif-chip{{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap}}
 .dif-chip.pos{{background:#dcfce7;color:#15803d}}
+.dif-chip.warn{{background:#fef9c3;color:#854d0e}}
 .dif-chip.neg{{background:#fee2e2;color:#b91c1c}}
-.dif-chip.zero{{background:#f1f5f9;color:#94a3b8}}
 .no-data-cell{{color:#d1d5db;font-size:11px;text-align:center}}
 
-.detail-btn{{padding:4px 12px;background:#0f2044;color:#fff;border:none;border-radius:5px;
-  font-size:11px;font-weight:600;cursor:pointer;transition:background .15s}}
+.detail-btn{{padding:4px 10px;background:#0f2044;color:#fff;border:none;border-radius:5px;
+  font-size:11px;font-weight:600;cursor:pointer;transition:background .15s;margin:0 6px}}
 .detail-btn:hover{{background:#1e3a6e}}
+.dash-table tbody tr.totals-row td{{font-weight:700;background:#f8fafc;border-top:2px solid #e2e8f0;color:#0f2044}}
 
 /* ── Colored tabs (fucsia/rosa) ── */
 .tab-btn.tab-rosa{{color:#f9a8d4}}
@@ -339,9 +430,9 @@ function buildNav() {{
 function difChip(val) {{
   if (val === null || val === undefined) return '<span class="no-data-cell">—</span>';
   const n = Number(val);
-  if (n > 0)  return `<span class="dif-chip pos">+${{n}}</span>`;
-  if (n < 0)  return `<span class="dif-chip neg">${{n}}</span>`;
-  return `<span class="dif-chip zero">0</span>`;
+  if (n > 15)  return `<span class="dif-chip neg">${{n}}</span>`;
+  if (n < -15) return `<span class="dif-chip warn">${{n}}</span>`;
+  return `<span class="dif-chip pos">${{n}}</span>`;
 }}
 
 function buildDashboard() {{
@@ -381,6 +472,26 @@ function buildDashboard() {{
       `<tr><td>${{fam.familia}}</td>${{cells}}<td>${{detailBtn}}</td></tr>`);
   }});
 
+  // Totals row
+  const totals = WEEKS.map((w, wi) => {{
+    let sumP = 0, sumS = 0;
+    RESUM_DATA.forEach(fam => {{
+      const wk = fam.weeks[wi];
+      if (wk && wk.planning !== null && wk.planning !== undefined) sumP += Number(wk.planning) || 0;
+      if (wk && wk.sem !== null && wk.sem !== undefined) sumS += Number(wk.sem) || 0;
+    }});
+    return {{planning: sumP, sem: sumS}};
+  }});
+  const totalCells = totals.map(t =>
+    `<td><div class="week-cell">
+      <span class="wc-planning">${{t.planning}}</span>
+      <span class="wc-sep">/</span>
+      <span class="wc-sem">${{t.sem}}</span>
+    </div></td>`
+  ).join('');
+  tbody.insertAdjacentHTML('beforeend',
+    `<tr class="totals-row"><td>Total</td>${{totalCells}}<td></td></tr>`);
+
   document.getElementById('dash-meta').textContent =
     `Semanas ${{WEEKS[0]}} – ${{WEEKS[WEEKS.length-1]}} · ${{RESUM_DATA.length}} familias`;
 }}
@@ -409,9 +520,15 @@ function faseCell(fam, fase) {{
   const total  = phases.length;
   const idx    = phases.findIndex(p => fase.startsWith(p.name.substring(0, 12)));
   const pct    = (total > 0 && idx >= 0) ? Math.round(((idx + 1) / total) * 100) : 0;
+  const barHtml = (total > 0 && idx >= 0)
+    ? `<div style="display:flex;align-items:center;gap:5px">
+        <div class="fase-bar-bg"><div class="fase-bar" style="width:${{pct}}%"></div></div>
+        <span style="font-size:10px;color:#1e293b;font-weight:600">${{pct}}%</span>
+      </div>`
+    : '';
   return `<div class="fase-wrap">
     <span class="fase-text" title="${{fase}}">${{fase}}</span>
-    ${{total > 0 && idx >= 0 ? `<div class="fase-bar-bg"><div class="fase-bar" style="width:${{pct}}%"></div></div>` : ''}}
+    ${{barHtml}}
   </div>`;
 }}
 
@@ -444,8 +561,9 @@ function renderTable(fam) {{
       const val = r[k];
       if (k === 'disp1' || k === 'disp2')  return `<td>${{dispBadge(val)}}</td>`;
       if (k === 'txt')                      return `<td>${{txtBadge(val)}}</td>`;
-      if (k === 'fase')                     return `<td>${{faseCell(r.familia || fam, val)}}</td>`;
-      if (k === 'article')                  return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
+      if (k === 'fase')       return `<td>${{faseCell(r.familia || fam, val)}}</td>`;
+      if (k === 'fecha_fab') return `<td style="text-align:center;font-size:11px;color:#374151;white-space:nowrap">${{val ?? ''}}</td>`;
+      if (k === 'article')   return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
       if (k === 'sota_cmd')   return `<td style="text-align:center">${{val === 'X' ? '<span class="sota-check">✓</span>' : ''}}</td>`;
       if (k === 'prep_linia') return `<td style="text-align:center">${{val === 'X' ? '<span class="prep-check">✓</span>' : ''}}</td>`;
       if (k === 'pzas_lot' || k === 'pzas_cmd') return `<td style="text-align:right;font-weight:600">${{val}}</td>`;
