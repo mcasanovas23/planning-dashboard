@@ -276,6 +276,10 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .dash-table td{{padding:8px 8px;vertical-align:middle;border-right:1px solid #f1f5f9;font-size:11px;overflow:hidden}}
 .dash-table td:first-child{{font-weight:700;color:#0f2044;font-size:12px;border-right:2px solid #e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 .dash-table td:last-child{{border-right:none}}
+.dash-table thead tr.wk-subheader th{{background:#0a1a38;color:#94a3b8;padding:4px 8px;
+  text-align:center;font-size:10px;font-weight:500;border-right:1px solid rgba(255,255,255,.08)}}
+.dash-table thead tr.wk-subheader th.prog-sub{{color:#86efac}}
+.dash-table td.week-pair-start{{border-left:2px solid #e2e8f0}}
 .dash-table tbody tr:last-child td{{border-bottom:none}}
 
 /* Week cell: planning (bold) / sem (grey small)  chip — todo en línea */
@@ -439,7 +443,7 @@ function famWeekProgress(fam, weekNum) {{
     const idx = phases.findIndex(p => r.fase.startsWith(p.name.substring(0, 12)));
     if (idx >= 0) {{ sum += Math.round(((idx + 1) / total) * 100); count++; }}
   }});
-  return count ? Math.round(sum / count) : null;
+  return count ? Math.round(sum / count) : 0;
 }}
 
 function difChip(val) {{
@@ -459,13 +463,17 @@ function buildDashboard() {{
   for (let i = 0; i < nWeeks; i++) cg += `<col><col style="width:85px">`;
   cg += `</colgroup>`;
 
-  // Header row
-  let thCols = `<th>Familia</th>`;
+  // Header: fila superior con colspan=2 por par, fila inferior con subetiquetas
+  let th1 = `<th rowspan="2" style="vertical-align:middle">Familia</th>`;
+  let th2 = ``;
   WEEKS.forEach(w => {{
-    thCols += `<th>Sem. ${{w}}</th>`;
-    thCols += `<th style="font-size:10px;letter-spacing:0;font-weight:500;color:#b0c4de">Progreso</th>`;
+    th1 += `<th colspan="2" style="border-left:2px solid rgba(255,255,255,.25);border-bottom:1px solid rgba(255,255,255,.12)">Sem. ${{w}}</th>`;
+    th2 += `<th>Planif.</th><th class="prog-sub">Progreso</th>`;
   }});
-  tbl.innerHTML = cg + `<thead><tr class="wk-header">${{thCols}}</tr></thead><tbody id="dash-tbody"></tbody>`;
+  tbl.innerHTML = cg + `<thead>
+    <tr class="wk-header">${{th1}}</tr>
+    <tr class="wk-subheader">${{th2}}</tr>
+  </thead><tbody id="dash-tbody"></tbody>`;
 
   const tbody = document.getElementById('dash-tbody');
   RESUM_DATA.forEach(fam => {{
@@ -481,8 +489,8 @@ function buildDashboard() {{
           </div></td>`
         : `<td></td>`;
       if (w.sem === null && w.planning === null)
-        return `<td><span class="no-data-cell">—</span></td>${{progCell}}`;
-      return `<td><div class="week-cell">
+        return `<td class="week-pair-start"><span class="no-data-cell">—</span></td>${{progCell}}`;
+      return `<td class="week-pair-start"><div class="week-cell">
         <span class="wc-planning">${{w.planning ?? '—'}}</span>
         <span class="wc-sep">/</span>
         <span class="wc-sem">${{w.sem ?? '—'}}</span>
@@ -505,7 +513,7 @@ function buildDashboard() {{
     return {{planning: sumP, sem: sumS}};
   }});
   const totalCells = totals.map(t =>
-    `<td><div class="week-cell">
+    `<td class="week-pair-start"><div class="week-cell">
       <span class="wc-planning">${{t.planning}}</span>
       <span class="wc-sep">/</span>
       <span class="wc-sem">${{t.sem}}</span>
