@@ -262,6 +262,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .dash-meta{{font-size:11px;color:#64748b}}
 
 .table-wrap{{overflow-x:auto;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.1)}}
+.plan-table-wrap{{overflow:auto;max-height:calc(100vh - 200px)}}
 
 /* ── Dashboard table — responsive ── */
 .dash-table{{width:100%;table-layout:fixed;border-collapse:collapse;background:#fff;font-size:12px}}
@@ -319,7 +320,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 /* ── Planning table ── */
 .plan-table{{width:100%;border-collapse:collapse;background:#fff;font-size:12px}}
 .plan-table thead tr:first-child th{{background:#0f2044;color:#fff;padding:8px 10px;text-align:left;
-  white-space:nowrap;position:sticky;top:var(--plan-hdr-top,0px);z-index:11;font-size:11px;font-weight:700;
+  white-space:nowrap;position:sticky;top:0;z-index:11;font-size:11px;font-weight:700;
   letter-spacing:.3px}}
 .plan-table tbody tr{{border-bottom:1px solid #f1f5f9;transition:background .1s}}
 .plan-table tbody tr:hover{{background:#f0f7ff}}
@@ -356,7 +357,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .fase-bar{{height:3px;background:#3b82f6;border-radius:2px}}
 
 /* ── Column filters ── */
-.filter-row th{{background:#162d5a;padding:4px 6px;position:sticky;top:var(--plan-filter-top,34px);z-index:9}}
+.filter-row th{{background:#162d5a;padding:4px 6px;position:sticky;top:34px;z-index:9}}
 .col-filter{{
   width:100%;padding:3px 6px;border:1px solid rgba(255,255,255,.18);
   border-radius:4px;background:rgba(255,255,255,.08);color:#e2e8f0;
@@ -634,7 +635,7 @@ function buildFamiliaTab(fam) {{
       <div class="week-filter">${{weekBtns}}</div>
       <span class="row-count" id="rowcount-${{fam}}"></span>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap plan-table-wrap">
       <table class="plan-table">
         <thead>
           <tr>${{thCols}}</tr>
@@ -676,21 +677,8 @@ function onColFilter(fam, key, val) {{
 }}
 
 // ── Init ──────────────────────────────────────────────────────────────────
-function updateStickyOffset() {{
-  const topBar = document.querySelector('.top-bar');
-  const tabNav = document.querySelector('.tab-nav');
-  const off = Math.round(
-    (topBar ? topBar.getBoundingClientRect().height : 0) +
-    (tabNav ? tabNav.getBoundingClientRect().height : 0)
-  );
-  document.documentElement.style.setProperty('--plan-hdr-top', off + 'px');
-  document.documentElement.style.setProperty('--plan-filter-top', (off + 34) + 'px');
-}}
-window.addEventListener('resize', updateStickyOffset);
-
 buildNav();
 buildDashboard();
-updateStickyOffset();
 </script>
 </body>
 </html>"""
