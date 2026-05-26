@@ -86,10 +86,10 @@ all_rows = list(ws.iter_rows(values_only=True))
 COL_INDICES = [0,1,2,3,5,7,10,12,14,18,19,20,21,22,27]
 COL_KEYS    = ['article','medidas','familia','lot','setmana',
                'mat1','disp1','mat2','disp2','prep_linia',
-               'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_fab','txt']
+               'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_fab']
 COL_HEADERS = ['Artículo','Medidas','Familia','Lote','Semana',
                'Balón','Disp. Mat1','Material 2','Disp. Mat2','Prep. Línea',
-               'peces_lot','peces_comanda','Sota Cmd','Fase Actual','Fecha Fab.','Txt']
+               'peces_lot','peces_comanda','Sota Cmd','Fase Actual','Fecha Fab.']
 
 rows_data = []
 for row in all_rows[1:]:
