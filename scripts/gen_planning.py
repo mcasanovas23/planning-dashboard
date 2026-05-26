@@ -219,8 +219,8 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 
 /* ── Planning table ── */
 .plan-table{{width:100%;border-collapse:collapse;background:#fff;font-size:12px}}
-.plan-table thead th{{background:#0f2044;color:#fff;padding:8px 10px;text-align:left;
-  white-space:nowrap;position:sticky;top:0;z-index:10;font-size:11px;font-weight:700;
+.plan-table thead tr:first-child th{{background:#0f2044;color:#fff;padding:8px 10px;text-align:left;
+  white-space:nowrap;position:sticky;top:0;z-index:11;font-size:11px;font-weight:700;
   letter-spacing:.3px}}
 .plan-table tbody tr{{border-bottom:1px solid #f1f5f9;transition:background .1s}}
 .plan-table tbody tr:hover{{background:#f0f7ff}}
@@ -250,6 +250,15 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .fase-text{{font-size:11px;color:#374151;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .fase-bar-bg{{height:3px;background:#e5e7eb;border-radius:2px;width:100px}}
 .fase-bar{{height:3px;background:#3b82f6;border-radius:2px}}
+
+/* ── Column filters ── */
+.filter-row th{{background:#162d5a;padding:4px 6px;position:sticky;top:34px;z-index:9}}
+.col-filter{{
+  width:100%;padding:3px 6px;border:1px solid rgba(255,255,255,.18);
+  border-radius:4px;background:rgba(255,255,255,.08);color:#e2e8f0;
+  font-size:10px;outline:none;font-family:inherit}}
+.col-filter::placeholder{{color:rgba(255,255,255,.35)}}
+.col-filter:focus{{background:rgba(255,255,255,.18);border-color:#60a5fa}}
 
 /* Scrollbar */
 ::-webkit-scrollbar{{height:6px;width:6px}}
@@ -289,8 +298,9 @@ const ALL_ROWS     = {j_all_rows};
 const FAM_HAS_MAT2 = new Set({j_has_mat2});
 
 // ── Tabs ──────────────────────────────────────────────────────────────────
-const activeFilters = {{}};
-const searchState   = {{}};
+const activeFilters  = {{}};
+const searchState    = {{}};
+const colFilterState = {{}};
 
 function showTab(id) {{
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -395,10 +405,13 @@ function renderTable(fam) {{
   const activeW = activeFilters[fam];
   const showMat2 = FAM_HAS_MAT2.has(fam);
 
+  const colFilters = colFilterState[fam] || {{}};
   const filtered = rows.filter(r => {{
     if (activeW && activeW.size > 0 && !activeW.has(r.setmana)) return false;
-    if (search) {{
-      if (!Object.values(r).join(' ').toLowerCase().includes(search)) return false;
+    if (search && !Object.values(r).join(' ').toLowerCase().includes(search)) return false;
+    for (const [k, v] of Object.entries(colFilters)) {{
+      if (!v) continue;
+      if (!String(r[k] ?? '').toLowerCase().includes(v.toLowerCase())) return false;
     }}
     return true;
   }});
@@ -445,18 +458,26 @@ function buildFamiliaTab(fam) {{
     return `<th>${{COL_HEADERS[i]}}</th>`;
   }}).join('');
 
+  const filterCells = COL_KEYS.map((k) => {{
+    if ((k === 'mat2' || k === 'disp2') && !showMat2) return '';
+    return `<th><input class="col-filter" placeholder="▼" oninput="onColFilter('${{fam}}','${{k}}',this.value)"></th>`;
+  }}).join('');
+
   const div = document.createElement('div');
   div.id = fam; div.className = 'tab-content';
   div.innerHTML = `
     <div class="fam-controls">
       <h2>${{fam}}</h2>
-      <input class="search-box" placeholder="Buscar..." oninput="onSearch('${{fam}}',this.value)">
+      <input class="search-box" placeholder="Buscar en todo..." oninput="onSearch('${{fam}}',this.value)">
       <div class="week-filter">${{weekBtns}}</div>
       <span class="row-count" id="rowcount-${{fam}}"></span>
     </div>
     <div class="table-wrap">
       <table class="plan-table">
-        <thead><tr>${{thCols}}</tr></thead>
+        <thead>
+          <tr>${{thCols}}</tr>
+          <tr class="filter-row">${{filterCells}}</tr>
+        </thead>
         <tbody id="tbody-${{fam}}"></tbody>
       </table>
     </div>`;
@@ -483,6 +504,12 @@ function toggleWeek(fam, week, btn) {{
 
 function onSearch(fam, val) {{
   searchState[fam] = val;
+  renderTable(fam);
+}}
+
+function onColFilter(fam, key, val) {{
+  if (!colFilterState[fam]) colFilterState[fam] = {{}};
+  colFilterState[fam][key] = val;
   renderTable(fam);
 }}
 
