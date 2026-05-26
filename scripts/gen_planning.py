@@ -77,9 +77,9 @@ COL_INDICES = [0,1,2,3,5,7,10,12,14,18,19,20,21,22,27]
 COL_KEYS    = ['article','medidas','familia','lot','setmana',
                'mat1','disp1','mat2','disp2','prep_linia',
                'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_fab','txt']
-COL_HEADERS = ['Artículo','Medidas','Familia','Lote','Sem.',
-               'Material 1','Disp. Mat1','Material 2','Disp. Mat2','Prep. Línea',
-               'Pzas/Lote','Pzas/Cmd','Sota Cmd','Fase Actual','Fecha Fab.','Txt']
+COL_HEADERS = ['Artículo','Medidas','Familia','Lote','Semana',
+               'Balón','Disp. Mat1','Material 2','Disp. Mat2','Prep. Línea',
+               'peces_lot','peces_comanda','Sota Cmd','Fase Actual','Fecha Fab.','Txt']
 
 rows_data = []
 for row in all_rows[1:]:
@@ -205,7 +205,7 @@ def compute_fecha_fab(familia, tab, fase_actual, fases_map, lt_data):
     if current_order is None:
         return ''
     if current_order >= etiq_order:
-        return TODAY.strftime('%d/%m/%Y')
+        return '__ESTERIL__'
     remaining_phases = etiq_order - current_order
     remaining_days = math.ceil(remaining_phases / phases_per_day)
     fecha = add_working_days(TODAY, remaining_days - 1)
@@ -310,22 +310,17 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .search-box{{padding:5px 11px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;
   width:190px;outline:none}}
 .search-box:focus{{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.2)}}
-.week-filter{{display:flex;gap:3px;flex-wrap:wrap}}
-.week-btn{{padding:3px 9px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;
-  font-size:11px;cursor:pointer;font-weight:600;color:#475569}}
-.week-btn:hover{{background:#e2e8f0}}
-.week-btn.active{{background:#0f2044;color:#fff;border-color:#0f2044}}
 .row-count{{font-size:11px;color:#64748b;margin-left:auto}}
 
 /* ── Planning table ── */
 .plan-table{{width:100%;border-collapse:collapse;background:#fff;font-size:12px}}
-.plan-table thead tr:first-child th{{background:#0f2044;color:#fff;padding:8px 10px;text-align:left;
+.plan-table thead tr:first-child th{{background:#0f2044;color:#fff;padding:8px 10px;text-align:center;
   white-space:nowrap;position:sticky;top:0;z-index:11;font-size:11px;font-weight:700;
   letter-spacing:.3px}}
 .plan-table tbody tr{{border-bottom:1px solid #f1f5f9;transition:background .1s}}
 .plan-table tbody tr:hover{{background:#f0f7ff}}
 /* retras: sin fondo rojo, solo hover normal */
-.plan-table td{{padding:6px 10px;vertical-align:middle;white-space:nowrap}}
+.plan-table td{{padding:6px 10px;vertical-align:middle;white-space:nowrap;text-align:center}}
 
 /* ── Cell styles ── */
 .badge{{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}}
@@ -353,16 +348,29 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .fase-wrap{{display:flex;flex-direction:column;gap:2px}}
 .fase-text{{font-size:11px;color:#374151;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .fase-bar-bg{{height:3px;background:#e5e7eb;border-radius:2px;width:100px}}
-.fase-bar{{height:3px;background:#3b82f6;border-radius:2px}}
+.fase-bar{{height:3px;background:#22c55e;border-radius:2px}}
 
 /* ── Column filters ── */
-.filter-row th{{background:#162d5a;padding:4px 6px;position:sticky;top:34px;z-index:9}}
-.col-filter{{
-  width:100%;padding:3px 6px;border:1px solid rgba(255,255,255,.18);
-  border-radius:4px;background:rgba(255,255,255,.08);color:#e2e8f0;
-  font-size:10px;outline:none;font-family:inherit}}
-.col-filter::placeholder{{color:rgba(255,255,255,.35)}}
-.col-filter:focus{{background:rgba(255,255,255,.18);border-color:#60a5fa}}
+.filter-row th{{background:#162d5a;padding:3px 4px;position:sticky;top:34px;z-index:9}}
+.col-filter-wrap{{position:relative;text-align:center}}
+.col-filter-btn{{width:100%;padding:2px 4px;border:1px solid rgba(255,255,255,.2);border-radius:4px;
+  background:rgba(255,255,255,.08);color:#e2e8f0;font-size:10px;cursor:pointer;font-family:inherit}}
+.col-filter-btn:hover{{background:rgba(255,255,255,.18)}}
+.col-filter-btn.active{{background:rgba(59,130,246,.35);border-color:#60a5fa;color:#fff}}
+.filter-dropdown{{background:#fff;border:1px solid #e2e8f0;border-radius:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,.18);min-width:160px;max-width:260px;padding:6px 0;z-index:9999}}
+.fd-search{{display:block;width:calc(100% - 16px);margin:0 8px 4px;padding:4px 8px;
+  border:1px solid #cbd5e1;border-radius:5px;font-size:11px;outline:none}}
+.fd-search:focus{{border-color:#3b82f6}}
+.fd-options{{max-height:220px;overflow-y:auto}}
+.fd-option{{display:flex;align-items:center;gap:7px;padding:4px 12px;cursor:pointer;
+  font-size:11px;color:#374151;white-space:nowrap}}
+.fd-option:hover{{background:#f0f7ff}}
+.fd-option input[type=checkbox]{{cursor:pointer;flex-shrink:0;accent-color:#3b82f6}}
+.fd-all{{border-bottom:1px solid #f1f5f9;margin-bottom:2px;padding-bottom:5px;color:#64748b}}
+/* Esterilizando badge */
+.esteril-badge{{display:inline-block;padding:2px 8px;border-radius:10px;
+  background:#0f2044;color:#fff;font-size:10px;font-weight:700;white-space:nowrap}}
 
 /* Scrollbar */
 ::-webkit-scrollbar{{height:6px;width:6px}}
@@ -402,7 +410,6 @@ const ALL_ROWS     = {j_all_rows};
 const FAM_HAS_MAT2 = new Set({j_has_mat2});
 
 // ── Tabs ──────────────────────────────────────────────────────────────────
-const activeFilters  = {{}};
 const searchState    = {{}};
 const colFilterState = {{}};
 
@@ -468,7 +475,7 @@ function buildDashboard() {{
   let th2 = ``;
   WEEKS.forEach(w => {{
     th1 += `<th colspan="4" style="border-left:2px solid rgba(255,255,255,.25);border-bottom:1px solid rgba(255,255,255,.12)">Sem. ${{w}}</th>`;
-    th2 += `<th>Plan.</th><th>Teór.</th><th>Dif.</th><th class="prog-sub">Prog.</th>`;
+    th2 += `<th>Teór.</th><th>Plan.</th><th>Dif.</th><th class="prog-sub">Prog.</th>`;
   }});
   tbl.innerHTML = cg + `<thead>
     <tr class="wk-header">${{th1}}</tr>
@@ -490,8 +497,8 @@ function buildDashboard() {{
         : `<td></td>`;
       if (w.sem === null && w.planning === null)
         return `<td class="week-pair-start"></td><td></td><td></td>${{progCell}}`;
-      return `<td class="week-pair-start" style="text-align:center;font-weight:700;font-size:12px;color:#1e293b">${{w.planning ?? '—'}}</td>` +
-             `<td style="text-align:center;font-size:10px;color:#94a3b8">${{w.sem ?? '—'}}</td>` +
+      return `<td class="week-pair-start" style="text-align:center;font-size:10px;color:#94a3b8">${{w.sem ?? '—'}}</td>` +
+             `<td style="text-align:center;font-weight:700;font-size:12px;color:#1e293b">${{w.planning ?? '—'}}</td>` +
              `<td style="text-align:center">${{difChip(w.dif)}}</td>` +
              progCell;
     }}).join('');
@@ -511,8 +518,8 @@ function buildDashboard() {{
     return {{planning: sumP, sem: sumS}};
   }});
   const totalCells = totals.map(t =>
-    `<td class="week-pair-start" style="text-align:center;font-weight:700;font-size:12px;color:#1e293b">${{t.planning}}</td>` +
-    `<td style="text-align:center;font-size:10px;color:#94a3b8">${{t.sem}}</td>` +
+    `<td class="week-pair-start" style="text-align:center;font-size:10px;color:#94a3b8">${{t.sem}}</td>` +
+    `<td style="text-align:center;font-weight:700;font-size:12px;color:#1e293b">${{t.planning}}</td>` +
     `<td></td><td></td>`
   ).join('');
   tbody.insertAdjacentHTML('beforeend',
@@ -543,10 +550,13 @@ function txtBadge(val) {{
 function faseCell(fam, fase) {{
   if (!fase) return '';
   const phases = FASES_MAP[fam] || [];
-  const total  = phases.length;
-  const idx    = phases.findIndex(p => fase.startsWith(p.name.substring(0, 12)));
-  const pct    = (total > 0 && idx >= 0) ? Math.round(((idx + 1) / total) * 100) : 0;
-  const barHtml = (total > 0 && idx >= 0)
+  if (!phases.length) return `<div class="fase-wrap"><span class="fase-text" title="${{fase}}">${{fase}}</span></div>`;
+  const etiqIdx = phases.findIndex(p => p.name.toLowerCase().includes('etiquetado envase primario'));
+  const capIdx  = etiqIdx >= 0 ? etiqIdx : phases.length - 1;
+  const idx     = phases.findIndex(p => fase.startsWith(p.name.substring(0, 12)));
+  let pct = 0;
+  if (idx >= 0) pct = idx >= capIdx ? 100 : Math.round(((idx + 1) / (capIdx + 1)) * 100);
+  const barHtml = idx >= 0
     ? `<div style="display:flex;align-items:center;gap:5px">
         <div class="fase-bar-bg"><div class="fase-bar" style="width:${{pct}}%"></div></div>
         <span style="font-size:10px;color:#1e293b;font-weight:600">${{pct}}%</span>
@@ -561,16 +571,14 @@ function faseCell(fam, fase) {{
 function renderTable(fam) {{
   const rows    = ALL_ROWS[fam] || [];
   const search  = (searchState[fam] || '').toLowerCase();
-  const activeW = activeFilters[fam];
   const showMat2 = FAM_HAS_MAT2.has(fam);
 
   const colFilters = colFilterState[fam] || {{}};
   const filtered = rows.filter(r => {{
-    if (activeW && activeW.size > 0 && !activeW.has(r.setmana)) return false;
     if (search && !Object.values(r).join(' ').toLowerCase().includes(search)) return false;
     for (const [k, v] of Object.entries(colFilters)) {{
-      if (!v) continue;
-      if (!String(r[k] ?? '').toLowerCase().includes(v.toLowerCase())) return false;
+      if (v === null || v === undefined) continue;
+      if (!v.has(String(r[k] ?? ''))) return false;
     }}
     return true;
   }});
@@ -588,13 +596,16 @@ function renderTable(fam) {{
       if (k === 'disp1' || k === 'disp2')  return `<td>${{dispBadge(val)}}</td>`;
       if (k === 'txt')                      return `<td>${{txtBadge(val)}}</td>`;
       if (k === 'fase')       return `<td>${{faseCell(r.familia || fam, val)}}</td>`;
-      if (k === 'fecha_fab') return `<td style="text-align:center;font-size:11px;color:#374151;white-space:nowrap">${{val ?? ''}}</td>`;
+      if (k === 'fecha_fab') {{
+        if (val === '__ESTERIL__') return `<td><span class="esteril-badge">Esterilizando</span></td>`;
+        return `<td style="font-size:11px;color:#374151;white-space:nowrap">${{val ?? ''}}</td>`;
+      }}
       if (k === 'article')   return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
-      if (k === 'sota_cmd')   return `<td style="text-align:center">${{val === 'X' ? '<span class="sota-check">comanda</span>' : ''}}</td>`;
-      if (k === 'prep_linia') return `<td style="text-align:center">${{val === 'X' ? '<span class="prep-check">✓</span>' : ''}}</td>`;
-      if (k === 'pzas_lot' || k === 'pzas_cmd') return `<td style="text-align:right;font-weight:600">${{val}}</td>`;
-      if (k === 'setmana')                  return `<td style="text-align:center;font-weight:700;color:#0f2044">${{val}}</td>`;
-      if (k === 'lot')                      return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
+      if (k === 'sota_cmd')   return `<td>${{val === 'X' ? '<span class="sota-check">comanda</span>' : ''}}</td>`;
+      if (k === 'prep_linia') return `<td>${{val === 'X' ? '<span class="prep-check">✓</span>' : ''}}</td>`;
+      if (k === 'pzas_lot' || k === 'pzas_cmd') return `<td style="font-weight:600">${{val}}</td>`;
+      if (k === 'setmana')   return `<td style="font-weight:700;color:#0f2044">${{val}}</td>`;
+      if (k === 'lot')       return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
       return `<td>${{val ?? ''}}</td>`;
     }}).join('');
 
@@ -605,11 +616,6 @@ function renderTable(fam) {{
 function buildFamiliaTab(fam) {{
   const rows    = ALL_ROWS[fam] || [];
   const showMat2 = FAM_HAS_MAT2.has(fam);
-  const weeks   = [...new Set(rows.map(r => r.setmana).filter(Boolean))].sort((a,b)=>a-b);
-
-  const weekBtns = ['Todas', ...weeks].map((w, idx) =>
-    `<button class="week-btn ${{idx===0?'active':''}}" onclick="toggleWeek('${{fam}}',${{idx===0?'null':w}},this)">${{idx===0?'Todas':'Sem. '+w}}</button>`
-  ).join('');
 
   const thCols = COL_KEYS.map((k, i) => {{
     if ((k === 'mat2' || k === 'disp2') && !showMat2) return '';
@@ -618,7 +624,11 @@ function buildFamiliaTab(fam) {{
 
   const filterCells = COL_KEYS.map((k) => {{
     if ((k === 'mat2' || k === 'disp2') && !showMat2) return '';
-    return `<th><input class="col-filter" placeholder="▼" oninput="onColFilter('${{fam}}','${{k}}',this.value)"></th>`;
+    const sid = _sid(fam, k);
+    return `<th><div class="col-filter-wrap">
+      <button class="col-filter-btn" id="cfb_${{sid}}"
+        onclick="openColFilter('${{fam.replace(/'/g,"\\'")}}','${{k}}',this)">▼</button>
+    </div></th>`;
   }}).join('');
 
   const div = document.createElement('div');
@@ -627,7 +637,6 @@ function buildFamiliaTab(fam) {{
     <div class="fam-controls">
       <h2>${{fam}}</h2>
       <input class="search-box" placeholder="Buscar en todo..." oninput="onSearch('${{fam}}',this.value)">
-      <div class="week-filter">${{weekBtns}}</div>
       <span class="row-count" id="rowcount-${{fam}}"></span>
     </div>
     <div class="table-wrap plan-table-wrap">
@@ -643,32 +652,89 @@ function buildFamiliaTab(fam) {{
   renderTable(fam);
 }}
 
-function toggleWeek(fam, week, btn) {{
-  if (!activeFilters[fam]) activeFilters[fam] = new Set();
-  const filter = activeFilters[fam];
-  if (week === null) {{
-    filter.clear();
-    document.querySelectorAll(`#${{CSS.escape(fam)}} .week-btn`).forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+function onSearch(fam, val) {{ searchState[fam] = val; renderTable(fam); }}
+
+// ── Excel-style column filters ────────────────────────────────────────────
+function _sid(fam, key) {{ return (fam + '_' + key).replace(/[ .\/]/g,'_'); }}
+
+let _fdFam = null, _fdKey = null, _fdClose = null;
+
+function getColVals(fam, key) {{
+  return [...new Set((ALL_ROWS[fam]||[]).map(r => String(r[key]??'')))].sort((a,b)=>{{
+    const na=Number(a),nb=Number(b); return (!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b);
+  }});
+}}
+
+function openColFilter(fam, key, anchor) {{
+  document.querySelectorAll('.filter-dropdown').forEach(d=>d.remove());
+  if (_fdClose) {{ document.removeEventListener('mousedown',_fdClose); _fdClose=null; }}
+  if (_fdFam===fam && _fdKey===key) {{ _fdFam=null; _fdKey=null; return; }}
+  _fdFam=fam; _fdKey=key;
+
+  const allVals = getColVals(fam, key);
+  const sel = (colFilterState[fam]||{{}})[key]; // null/undef=all, Set=filtered
+  const allSel = sel===null||sel===undefined;
+  const sid = _sid(fam, key);
+
+  const div = document.createElement('div');
+  div.className = 'filter-dropdown';
+  div.innerHTML = `<input class="fd-search" placeholder="Buscar..." oninput="fdSearch(this,'${{sid}}')">
+    <div class="fd-options" id="fdo_${{sid}}">
+      <label class="fd-option fd-all">
+        <input type="checkbox" ${{allSel?'checked':''}} onchange="fdAll(this,'${{fam}}','${{key}}')">
+        <span><em>(Seleccionar todo)</em></span></label>
+      ${{allVals.map(v=>`<label class="fd-option" data-v="${{v.replace(/"/g,'&quot;')}}">
+        <input type="checkbox" value="${{v.replace(/"/g,'&quot;')}}" ${{(allSel||sel.has(v))?'checked':''}}
+          onchange="fdVal(this,'${{fam}}','${{key}}')">
+        <span>${{v===''?'(vacío)':v}}</span></label>`).join('')}}
+    </div>`;
+  document.body.appendChild(div);
+  const r=anchor.getBoundingClientRect();
+  div.style.cssText=`position:fixed;top:${{r.bottom+2}}px;left:${{Math.max(0,r.left)}}px`;
+  _fdClose=function(e){{
+    if(!div.contains(e.target)&&e.target!==anchor){{
+      div.remove();_fdFam=null;_fdKey=null;
+      document.removeEventListener('mousedown',_fdClose);_fdClose=null;
+    }}
+  }};
+  setTimeout(()=>document.addEventListener('mousedown',_fdClose),50);
+}}
+
+function fdSearch(inp, sid) {{
+  const q=inp.value.toLowerCase();
+  document.querySelectorAll(`#fdo_${{sid}} .fd-option:not(.fd-all)`).forEach(el=>{{
+    el.style.display=el.querySelector('span').textContent.toLowerCase().includes(q)?'':'none';
+  }});
+}}
+
+function fdAll(cb, fam, key) {{
+  if(!colFilterState[fam]) colFilterState[fam]={{}};
+  const sid=_sid(fam,key);
+  if(cb.checked) {{
+    colFilterState[fam][key]=null;
+    document.querySelectorAll(`#fdo_${{sid}} input[type=checkbox]`).forEach(c=>c.checked=true);
   }} else {{
-    document.querySelector(`#${{CSS.escape(fam)}} .week-btn:first-child`).classList.remove('active');
-    filter.has(week) ? filter.delete(week) : filter.add(week);
-    btn.classList.toggle('active', filter.has(week));
-    if (filter.size === 0)
-      document.querySelector(`#${{CSS.escape(fam)}} .week-btn:first-child`).classList.add('active');
+    colFilterState[fam][key]=new Set();
+    document.querySelectorAll(`#fdo_${{sid}} .fd-option:not(.fd-all) input`).forEach(c=>c.checked=false);
   }}
-  renderTable(fam);
+  renderTable(fam); _fdBtnUpdate(fam,key);
 }}
 
-function onSearch(fam, val) {{
-  searchState[fam] = val;
-  renderTable(fam);
+function fdVal(cb, fam, key) {{
+  if(!colFilterState[fam]) colFilterState[fam]={{}};
+  const allVals=getColVals(fam,key);
+  let sel=colFilterState[fam][key];
+  if(sel===null||sel===undefined) sel=new Set(allVals);
+  cb.checked?sel.add(cb.value):sel.delete(cb.value);
+  colFilterState[fam][key]=sel.size===allVals.length?null:sel;
+  const allCb=document.querySelector(`#fdo_${{_sid(fam,key)}} .fd-all input`);
+  if(allCb) allCb.checked=colFilterState[fam][key]===null;
+  renderTable(fam); _fdBtnUpdate(fam,key);
 }}
 
-function onColFilter(fam, key, val) {{
-  if (!colFilterState[fam]) colFilterState[fam] = {{}};
-  colFilterState[fam][key] = val;
-  renderTable(fam);
+function _fdBtnUpdate(fam, key) {{
+  const btn=document.getElementById(`cfb_${{_sid(fam,key)}}`);
+  if(btn) btn.classList.toggle('active', colFilterState[fam]?.[key]!==null&&colFilterState[fam]?.[key]!==undefined);
 }}
 
 // ── Init ──────────────────────────────────────────────────────────────────
