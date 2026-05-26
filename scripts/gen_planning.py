@@ -458,17 +458,17 @@ function buildDashboard() {{
   const tbl = document.getElementById('dash-table');
   const nWeeks = WEEKS.length;
 
-  // Colgroup: familia fija, luego pares (semana auto + progreso 85px)
+  // Colgroup: familia fija + por semana: planif | teórico | dif | progreso
   let cg = `<colgroup><col style="width:110px">`;
-  for (let i = 0; i < nWeeks; i++) cg += `<col><col style="width:85px">`;
+  for (let i = 0; i < nWeeks; i++) cg += `<col style="width:44px"><col style="width:44px"><col style="width:52px"><col style="width:85px">`;
   cg += `</colgroup>`;
 
-  // Header: fila superior con colspan=2 por par, fila inferior con subetiquetas
+  // Header: fila superior colspan=4 por semana, fila inferior con 4 subetiquetas
   let th1 = `<th rowspan="2" style="vertical-align:middle">Familia</th>`;
   let th2 = ``;
   WEEKS.forEach(w => {{
-    th1 += `<th colspan="2" style="border-left:2px solid rgba(255,255,255,.25);border-bottom:1px solid rgba(255,255,255,.12)">Sem. ${{w}}</th>`;
-    th2 += `<th>Planif.</th><th class="prog-sub">Progreso</th>`;
+    th1 += `<th colspan="4" style="border-left:2px solid rgba(255,255,255,.25);border-bottom:1px solid rgba(255,255,255,.12)">Sem. ${{w}}</th>`;
+    th2 += `<th>Plan.</th><th>Teór.</th><th>Dif.</th><th class="prog-sub">Prog.</th>`;
   }});
   tbl.innerHTML = cg + `<thead>
     <tr class="wk-header">${{th1}}</tr>
@@ -482,20 +482,18 @@ function buildDashboard() {{
       const pct      = famWeekProgress(fam.familia, weekNum);
       const progCell = pct !== null
         ? `<td><div style="display:flex;align-items:center;gap:4px;padding:0 6px">
-            <div style="flex:1;height:5px;background:#e5e7eb;border-radius:3px;min-width:30px;overflow:hidden">
+            <div style="flex:1;height:5px;background:#e5e7eb;border-radius:3px;min-width:20px;overflow:hidden">
               <div style="height:5px;background:#22c55e;border-radius:3px;width:${{pct}}%"></div>
             </div>
             <span style="font-size:10px;font-weight:700;color:#1e293b;white-space:nowrap">${{pct}}%</span>
           </div></td>`
         : `<td></td>`;
       if (w.sem === null && w.planning === null)
-        return `<td class="week-pair-start"><span class="no-data-cell">—</span></td>${{progCell}}`;
-      return `<td class="week-pair-start"><div class="week-cell">
-        <span class="wc-planning">${{w.planning ?? '—'}}</span>
-        <span class="wc-sep">/</span>
-        <span class="wc-sem">${{w.sem ?? '—'}}</span>
-        ${{difChip(w.dif)}}
-      </div></td>${{progCell}}`;
+        return `<td class="week-pair-start"></td><td></td><td></td>${{progCell}}`;
+      return `<td class="week-pair-start" style="text-align:center;font-weight:700;font-size:12px;color:#1e293b">${{w.planning ?? '—'}}</td>` +
+             `<td style="text-align:center;font-size:10px;color:#94a3b8">${{w.sem ?? '—'}}</td>` +
+             `<td style="text-align:center">${{difChip(w.dif)}}</td>` +
+             progCell;
     }}).join('');
 
     tbody.insertAdjacentHTML('beforeend',
@@ -513,11 +511,9 @@ function buildDashboard() {{
     return {{planning: sumP, sem: sumS}};
   }});
   const totalCells = totals.map(t =>
-    `<td class="week-pair-start"><div class="week-cell">
-      <span class="wc-planning">${{t.planning}}</span>
-      <span class="wc-sep">/</span>
-      <span class="wc-sem">${{t.sem}}</span>
-    </div></td><td></td>`
+    `<td class="week-pair-start" style="text-align:center;font-weight:700;font-size:12px;color:#1e293b">${{t.planning}}</td>` +
+    `<td style="text-align:center;font-size:10px;color:#94a3b8">${{t.sem}}</td>` +
+    `<td></td><td></td>`
   ).join('');
   tbody.insertAdjacentHTML('beforeend',
     `<tr class="totals-row"><td>Total</td>${{totalCells}}</tr>`);
