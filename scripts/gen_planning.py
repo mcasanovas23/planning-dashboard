@@ -48,6 +48,16 @@ def add_working_days(start, n):
 
 TODAY = date.today()
 
+# Jueves de la semana 23 de fábrica (referencia ancla)
+WEEK23_THURSDAY = date(2026, 6, 4)
+
+def thursday_of_week(week_num):
+    """Jueves que cierra la semana de fábrica N (semanas empiezan viernes)."""
+    try:
+        return WEEK23_THURSDAY + timedelta(weeks=(int(week_num) - 23))
+    except (TypeError, ValueError):
+        return None
+
 EXCEL_PATH = r'C:\Users\mcasanovas\OneDrive - IVASCULAR, S.L.U\Planning General.xlsm'
 TMP_PATH   = r'C:\Users\mcasanovas\AppData\Local\Temp\Planning_General_tmp.xlsm'
 OUT_HTML   = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'index.html')
@@ -76,10 +86,10 @@ all_rows = list(ws.iter_rows(values_only=True))
 COL_INDICES = [0,1,2,3,5,7,10,12,14,18,19,20,21,22,27]
 COL_KEYS    = ['article','medidas','familia','lot','setmana',
                'mat1','disp1','mat2','disp2','prep_linia',
-               'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_fab','txt']
+               'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_obj','fecha_fab','txt']
 COL_HEADERS = ['Artículo','Medidas','Familia','Lote','Semana',
                'Balón','Disp. Mat1','Material 2','Disp. Mat2','Prep. Línea',
-               'peces_lot','peces_comanda','Sota Cmd','Fase Actual','Fecha Fab.','Txt']
+               'peces_lot','peces_comanda','Sota Cmd','Fase Actual','Fecha Obj.','Fecha Fab.','Txt']
 
 rows_data = []
 for row in all_rows[1:]:
@@ -211,9 +221,11 @@ def compute_fecha_fab(familia, tab, fase_actual, fases_map, lt_data):
     fecha = add_working_days(TODAY, remaining_days - 1)
     return fecha.strftime('%d/%m/%Y')
 
-# Second pass: add fecha_fab to each row
+# Second pass: add fecha_fab and fecha_obj to each row
 for rd in rows_data:
     rd['fecha_fab'] = compute_fecha_fab(rd['familia'], rd['_tab'], rd.get('fase', ''), fases_by_family, leadtime_data)
+    d = thursday_of_week(rd.get('setmana', ''))
+    rd['fecha_obj'] = d.strftime('%d/%m/%Y') if d else ''
 
 # ─── JSON blobs ─────────────────────────────────────────────────────────────
 j_resum    = json.dumps(resum_data,      ensure_ascii=False)
@@ -541,6 +553,12 @@ function dispBadge(val) {{
   return `<span class="badge">${{val}}</span>`;
 }}
 
+function parseDMY(s) {{
+  if (!s || s === '__ESTERIL__') return null;
+  const p = s.split('/');
+  return p.length === 3 ? new Date(+p[2], +p[1]-1, +p[0]) : null;
+}}
+
 function txtBadge(val) {{
   if (!val) return '';
   if ((val+'').toLowerCase().includes('prio')) return `<span class="badge badge-prio">${{val}}</span>`;
@@ -597,8 +615,14 @@ function renderTable(fam) {{
       if (k === 'disp1' || k === 'disp2')  return `<td>${{dispBadge(val)}}</td>`;
       if (k === 'txt')                      return `<td>${{txtBadge(val)}}</td>`;
       if (k === 'fase')       return `<td style="text-align:left">${{faseCell(r.familia || fam, val)}}</td>`;
+      if (k === 'fecha_obj') return `<td style="font-size:11px;color:#64748b;white-space:nowrap">${{val ?? ''}}</td>`;
       if (k === 'fecha_fab') {{
         if (val === '__ESTERIL__') return `<td><span class="esteril-badge">Esterilizando</span></td>`;
+        if (val) {{
+          const dFab = parseDMY(val), dObj = parseDMY(r.fecha_obj);
+          if (dFab && dObj && dFab > dObj)
+            return `<td><span class="sota-check">${{val}}</span></td>`;
+        }}
         return `<td style="font-size:11px;color:#374151;white-space:nowrap">${{val ?? ''}}</td>`;
       }}
       if (k === 'article')   return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
