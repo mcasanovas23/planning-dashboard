@@ -287,7 +287,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .dash-table tbody tr{{border-bottom:1px solid #f1f5f9;transition:background .1s}}
 .dash-table tbody tr:hover{{background:#f0f7ff}}
 .dash-table td{{padding:8px 8px;vertical-align:middle;border-right:1px solid #f1f5f9;font-size:11px;overflow:hidden}}
-.dash-table td:first-child{{font-weight:700;color:#0f2044;font-size:12px;border-right:2px solid #e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.dash-table td:first-child{{font-weight:700;color:#0f2044;font-size:12px;border-right:2px solid #e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}}
 .dash-table td:last-child{{border-right:none}}
 .dash-table thead tr.wk-subheader th{{background:#0a1a38;color:#94a3b8;padding:4px 8px;
   text-align:center;font-size:10px;font-weight:500;border-right:1px solid rgba(255,255,255,.08)}}
