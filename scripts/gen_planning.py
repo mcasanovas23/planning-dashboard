@@ -47,11 +47,9 @@ for row in all_rows[1:]:
     rd['_tab']     = canonical_tab(rd['familia'])  # which tab this row belongs to
     rows_data.append(rd)
 
-# Families that have any mat2 data → show mat2 columns in those tabs
-fam_has_mat2 = set(
-    rd['_tab'] for rd in rows_data
-    if rd['mat2'] not in ('', None)
-)
+# Families that show mat2 columns (explicit list per user spec)
+FAM_SHOW_MAT2 = {'ANGIOLIT', 'NAVISCOR', 'ICOVER', 'RESTORER'}
+fam_has_mat2 = FAM_SHOW_MAT2
 
 # Build rows grouped by _tab, sorted by setmana then article
 rows_by_tab = {}
@@ -145,7 +143,7 @@ html = f"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Planning General – iVascular</title>
+<title>Planning General – iVascular (CATBAL)</title>
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;font-size:13px}}
@@ -185,16 +183,15 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .dash-table thead tr.wk-header th:last-child{{border-right:none}}
 .dash-table tbody tr{{border-bottom:1px solid #f1f5f9;transition:background .1s}}
 .dash-table tbody tr:hover{{background:#f0f7ff}}
-.dash-table td{{padding:8px 10px;vertical-align:middle;border-right:1px solid #f1f5f9}}
-.dash-table td:first-child{{font-weight:700;color:#0f2044;font-size:13px;border-right:2px solid #e2e8f0;white-space:nowrap}}
+.dash-table td{{padding:5px 8px;vertical-align:middle;border-right:1px solid #f1f5f9;font-size:11px}}
+.dash-table td:first-child{{font-weight:700;color:#0f2044;font-size:12px;border-right:2px solid #e2e8f0;white-space:nowrap}}
 .dash-table td:last-child{{border-right:none;text-align:center;white-space:nowrap}}
 .dash-table tbody tr:last-child td{{border-bottom:none}}
 
-.week-cell{{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:90px}}
-.wc-top{{display:flex;align-items:baseline;gap:5px}}
-.wc-planning{{font-weight:700;font-size:13px;color:#1e293b}}
-.wc-sem{{font-size:10px;color:#94a3b8}}
-.dif-chip{{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700}}
+.week-cell{{display:flex;align-items:center;gap:5px;white-space:nowrap}}
+.wc-nums{{font-weight:700;font-size:11px;color:#1e293b;white-space:nowrap}}
+.wc-sep{{color:#cbd5e1;font-size:10px}}
+.dif-chip{{display:inline-block;padding:0px 6px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap}}
 .dif-chip.pos{{background:#dcfce7;color:#15803d}}
 .dif-chip.neg{{background:#fee2e2;color:#b91c1c}}
 .dif-chip.zero{{background:#f1f5f9;color:#94a3b8}}
@@ -203,6 +200,11 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .detail-btn{{padding:4px 12px;background:#0f2044;color:#fff;border:none;border-radius:5px;
   font-size:11px;font-weight:600;cursor:pointer;transition:background .15s}}
 .detail-btn:hover{{background:#1e3a6e}}
+
+/* ── Colored tabs (fucsia/rosa) ── */
+.tab-btn.tab-rosa{{color:#f9a8d4}}
+.tab-btn.tab-rosa:hover{{color:#f472b6;background:rgba(244,114,182,.08)}}
+.tab-btn.tab-rosa.active{{color:#f72585;border-bottom-color:#f72585;background:rgba(247,37,133,.08)}}
 
 /* ── Family tabs ── */
 .fam-controls{{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}}
@@ -224,8 +226,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
   letter-spacing:.3px}}
 .plan-table tbody tr{{border-bottom:1px solid #f1f5f9;transition:background .1s}}
 .plan-table tbody tr:hover{{background:#f0f7ff}}
-.plan-table tbody tr.retras{{background:#fff5f5}}
-.plan-table tbody tr.retras:hover{{background:#fee2e2}}
+/* retras: sin fondo rojo, solo hover normal */
 .plan-table td{{padding:6px 10px;vertical-align:middle;white-space:nowrap}}
 
 /* ── Cell styles ── */
@@ -238,12 +239,18 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 .badge-txt   {{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb}}
 .badge-prio  {{background:#f97316;color:#fff}}
 
-/* Sota comanda: always granate + white check */
+/* Sota comanda: rojo + white check */
 .sota-check{{
   display:inline-flex;align-items:center;justify-content:center;
-  width:20px;height:20px;border-radius:4px;
-  background:#7B1D3A;color:#fff;font-size:13px;font-weight:700;
+  width:15px;height:15px;border-radius:3px;
+  background:#d32f2f;color:#fff;font-size:10px;font-weight:700;
   line-height:1}}
+/* Prep línea: verde Asignado */
+.prep-check{{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:15px;height:15px;border-radius:3px;
+  background:#dcfce7;color:#166534;font-size:10px;font-weight:700;
+  line-height:1;border:1px solid #bbf7d0}}
 
 /* Fase progress */
 .fase-wrap{{display:flex;flex-direction:column;gap:2px}}
@@ -269,7 +276,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 <body>
 
 <div class="top-bar">
-  <h1>&#9783; Planning General – iVascular</h1>
+  <h1>&#9783; Planning General – iVascular (CATBAL)</h1>
   <span class="ts">Actualizado: {ts}</span>
 </div>
 
@@ -312,11 +319,13 @@ function showTab(id) {{
   }});
 }}
 
+const ROSA_TABS = new Set(['ANGIOLIT','NCXPERIE','XP PRO','ESS PRO','NAVISCOR']);
+
 function buildNav() {{
   const nav = document.getElementById('tab-nav');
   FAM_ORDERED.forEach(fam => {{
     const btn = document.createElement('button');
-    btn.className = 'tab-btn';
+    btn.className = 'tab-btn' + (ROSA_TABS.has(fam) ? ' tab-rosa' : '');
     btn.dataset.id = fam;
     btn.textContent = fam;
     btn.onclick = () => showTab(fam);
@@ -353,10 +362,7 @@ function buildDashboard() {{
       if (w.sem === null && w.planning === null)
         return `<td><span class="no-data-cell">—</span></td>`;
       return `<td><div class="week-cell">
-        <div class="wc-top">
-          <span class="wc-planning">${{w.planning ?? '—'}}</span>
-          <span class="wc-sem">/ ${{w.sem ?? '—'}}</span>
-        </div>
+        <span class="wc-nums">${{w.planning ?? '—'}}<span class="wc-sep"> / </span>${{w.sem ?? '—'}}</span>
         ${{difChip(w.dif)}}
       </div></td>`;
     }}).join('');
@@ -421,8 +427,6 @@ function renderTable(fam) {{
 
   const tbody = document.getElementById('tbody-' + fam);
   tbody.innerHTML = filtered.map(r => {{
-    const cls = r._retras ? 'retras' : '';
-
     const cells = COL_KEYS.map((k, i) => {{
       // Skip mat2/disp2 columns if family has no mat2 data
       if ((k === 'mat2' || k === 'disp2') && !showMat2) return '';
@@ -432,15 +436,15 @@ function renderTable(fam) {{
       if (k === 'txt')                      return `<td>${{txtBadge(val)}}</td>`;
       if (k === 'fase')                     return `<td>${{faseCell(r.familia || fam, val)}}</td>`;
       if (k === 'article')                  return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
-      if (k === 'sota_cmd')                 return `<td style="text-align:center">${{val === 'X' ? '<span class="sota-check">✓</span>' : ''}}</td>`;
-      if (k === 'prep_linia')               return `<td style="text-align:center">${{val === 'X' ? '<span class="sota-check" style="background:#3b82f6">✓</span>' : ''}}</td>`;
+      if (k === 'sota_cmd')   return `<td style="text-align:center">${{val === 'X' ? '<span class="sota-check">✓</span>' : ''}}</td>`;
+      if (k === 'prep_linia') return `<td style="text-align:center">${{val === 'X' ? '<span class="prep-check">✓</span>' : ''}}</td>`;
       if (k === 'pzas_lot' || k === 'pzas_cmd') return `<td style="text-align:right;font-weight:600">${{val}}</td>`;
       if (k === 'setmana')                  return `<td style="text-align:center;font-weight:700;color:#0f2044">${{val}}</td>`;
       if (k === 'lot')                      return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
       return `<td>${{val ?? ''}}</td>`;
     }}).join('');
 
-    return `<tr class="${{cls}}">${{cells}}</tr>`;
+    return `<tr>${{cells}}</tr>`;
   }}).join('');
 }}
 
