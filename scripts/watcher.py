@@ -44,7 +44,7 @@ def git_push():
         if r.returncode != 0 and 'nothing to commit' not in r.stdout + r.stderr:
             log(f'Git error ({" ".join(cmd[:2])}): {r.stderr[:200]}')
             return False
-    log('Git push OK → GitHub Pages actualizado')
+    log('Git push OK → https://mcasanovas23.github.io/planning-dashboard/')
     return True
 
 def main():
