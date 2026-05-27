@@ -394,8 +394,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;f
 <body>
 
 <div class="top-bar">
-  <h1>&#9783; Planning General – iVascular (CATBAL)</h1>
-  <span class="ts">Actualizado: {ts}</span>
+  <h1>&#9783; Planning General – iVascular (CATBAL) <span style="font-size:11px;font-weight:400;color:#94a3b8;margin-left:8px">{ts}</span></h1>
 </div>
 
 <nav class="tab-nav" id="tab-nav">
