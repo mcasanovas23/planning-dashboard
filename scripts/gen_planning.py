@@ -61,7 +61,7 @@ def thursday_of_week(week_num):
 EXCEL_PATH = r'C:\Users\mcasanovas\OneDrive - IVASCULAR, S.L.U\Planning General.xlsm'
 TMP_PATH   = r'C:\Users\mcasanovas\AppData\Local\Temp\Planning_General_tmp.xlsm'
 OUT_HTML        = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'index.html')
-OUT_HTML_DADES  = r'P:\Dades\Planning General.html'
+OUT_HTML_DADES  = r'P:\DPTO OPERACIONES\04 PLANIFICACION\04 Assistant Planning\Herramientas Web\Dades\Planning General.html'
 
 import shutil
 shutil.copy2(EXCEL_PATH, TMP_PATH)
