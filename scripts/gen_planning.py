@@ -628,7 +628,7 @@ function renderTable(fam) {{
       if (k === 'article')   return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
       if (k === 'sota_cmd')   return `<td>${{val === 'X' ? '<span class="sota-check">comanda</span>' : ''}}</td>`;
       if (k === 'prep_linia') return `<td>${{val === 'X' ? '<span class="prep-check">✓</span>' : ''}}</td>`;
-      if (k === 'pzas_lot') return `<td><div style="display:inline-flex;flex-direction:column;align-items:center;line-height:1.3"><span style="font-weight:600">${{val ?? ''}}</span>${{r.pzas_cmd ? `<span style="font-size:10px;color:#94a3b8">/${{r.pzas_cmd}}</span>` : ''}}</div></td>`;
+      if (k === 'pzas_lot') return `<td><div style="display:inline-flex;align-items:flex-end;gap:1px"><span style="font-weight:600">${{val ?? ''}}</span>${{r.pzas_cmd ? `<span style="font-size:10px;color:#94a3b8;line-height:1.4">/${{r.pzas_cmd}}</span>` : ''}}</div></td>`;
       if (k === 'setmana')   return `<td style="font-weight:700;color:#0f2044">${{val}}</td>`;
       if (k === 'lot')       return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
       return `<td>${{val ?? ''}}</td>`;
