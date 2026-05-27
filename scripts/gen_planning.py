@@ -60,7 +60,8 @@ def thursday_of_week(week_num):
 
 EXCEL_PATH = r'C:\Users\mcasanovas\OneDrive - IVASCULAR, S.L.U\Planning General.xlsm'
 TMP_PATH   = r'C:\Users\mcasanovas\AppData\Local\Temp\Planning_General_tmp.xlsm'
-OUT_HTML   = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'index.html')
+OUT_HTML        = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'index.html')
+OUT_HTML_DADES  = r'P:\Dades\Planning General.html'
 
 import shutil
 shutil.copy2(EXCEL_PATH, TMP_PATH)
@@ -770,6 +771,13 @@ buildDashboard();
 
 with open(OUT_HTML, 'w', encoding='utf-8') as f:
     f.write(html)
+
+try:
+    os.makedirs(os.path.dirname(OUT_HTML_DADES), exist_ok=True)
+    shutil.copy2(OUT_HTML, OUT_HTML_DADES)
+    print(f"OK: {OUT_HTML_DADES}")
+except Exception as e:
+    print(f"AVISO: no se pudo copiar a Dades: {e}")
 
 print(f"OK: {OUT_HTML}")
 print(f"Familias dashboard: {len(resum_data)}")
