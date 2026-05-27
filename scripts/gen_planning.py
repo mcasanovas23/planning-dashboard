@@ -84,13 +84,13 @@ ws = wb['Datos']
 all_rows = list(ws.iter_rows(values_only=True))
 
 # Columns: a,b,c,d,f,h,k,m,o,s,t,u,v,w,ab
-COL_INDICES = [0,1,2,3,5,7,10,12,14,18,19,20,21,22,27]
+COL_INDICES = [0,1,2,3,5,7,10,12,14,18,19,21,22,27]
 COL_KEYS    = ['article','medidas','familia','lot','setmana',
                'mat1','disp1','mat2','disp2','prep_linia',
-               'pzas_lot','pzas_cmd','sota_cmd','fase','fecha_fab']
+               'pzas_lot','sota_cmd','fase','fecha_fab']
 COL_HEADERS = ['Artículo','Medidas','Familia','Lote','Semana',
                'Balón','Disp. Mat1','Material 2','Disp. Mat2','Prep. Línea',
-               'peces_lot','peces_comanda','Sota Cmd','Fase Actual','Fecha Fab.']
+               'peces_lot','Sota Cmd','Fase Actual','Fecha Fab.']
 
 rows_data = []
 for row in all_rows[1:]:
@@ -101,6 +101,7 @@ for row in all_rows[1:]:
         v = row[ci] if ci < len(row) else None
         if isinstance(v, datetime): v = v.strftime('%d/%m/%Y')
         rd[COL_KEYS[i]] = v if v is not None else ''
+    rd['pzas_cmd'] = row[20] if len(row) > 20 and row[20] is not None else ''
     rd['_retras']  = bool(row[24] == '!!!') if len(row) > 24 else False
     rd['_tab']     = canonical_tab(rd['familia'])  # which tab this row belongs to
     rows_data.append(rd)
@@ -627,7 +628,7 @@ function renderTable(fam) {{
       if (k === 'article')   return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
       if (k === 'sota_cmd')   return `<td>${{val === 'X' ? '<span class="sota-check">comanda</span>' : ''}}</td>`;
       if (k === 'prep_linia') return `<td>${{val === 'X' ? '<span class="prep-check">✓</span>' : ''}}</td>`;
-      if (k === 'pzas_lot' || k === 'pzas_cmd') return `<td style="font-weight:600">${{val}}</td>`;
+      if (k === 'pzas_lot') return `<td><div style="display:inline-flex;flex-direction:column;align-items:center;line-height:1.3"><span style="font-weight:600">${{val ?? ''}}</span>${{r.pzas_cmd ? `<span style="font-size:10px;color:#94a3b8">/${{r.pzas_cmd}}</span>` : ''}}</div></td>`;
       if (k === 'setmana')   return `<td style="font-weight:700;color:#0f2044">${{val}}</td>`;
       if (k === 'lot')       return `<td style="font-family:monospace;font-size:11px">${{val}}</td>`;
       return `<td>${{val ?? ''}}</td>`;
